@@ -1,9 +1,9 @@
 package main.scala
 
-import com.google.inject.name.{Named, Names}
+import com.google.inject.name.Names
 import com.google.inject.{AbstractModule, Guice, Inject}
-import net.codingwell.scalaguice.ScalaModule
 import net.codingwell.scalaguice.InjectorExtensions._
+import net.codingwell.scalaguice.ScalaModule
 
 
 trait DataSet
@@ -18,7 +18,7 @@ case class ISPJsonDeserializer() extends JsonDeserializer[ISPDataSet] {
   println("............... ISP Json Deserializer init .............")
 }
 
-class DataSetClient[A <: DataSet] @Inject()(@Named("lbDeserializer") deserializer: JsonDeserializer[A]) {
+class DataSetClient[A <: DataSet] @Inject()(deserializer: JsonDeserializer[A]) {
   println(" Dataset client init")
 }
 
@@ -26,16 +26,16 @@ class DataSetClient[A <: DataSet] @Inject()(@Named("lbDeserializer") deserialize
 trait CitationDatasetResolver
 
 //@Inject() (@Named(Foo.NAME) something: Something)
-class LBCitationDatasetResolver[A <: DataSet] @Inject()(@Named("lbClient") dataSetClient: DataSetClient[A]) extends CitationDatasetResolver {
+class LBCitationDatasetResolver[A <: LBDataSet] @Inject()(dataSetClient: DataSetClient[A]) extends CitationDatasetResolver {
 
 
   println("@@@@ LB DataSet resolver invoked @@@")
 }
-/*
-class IspCitationDatasetResolver[A <: DataSet](@Named("ispClient") dataSetClient: DataSetClient[A]) extends CitationDatasetResolver {
+
+class IspCitationDatasetResolver[A <: ISPDataSet] @Inject()(dataSetClient: DataSetClient[A]) extends CitationDatasetResolver {
   println("@@@@ ISP DataSet resolver invoked @@@")
 }
-*/
+
 
 class Module extends AbstractModule with ScalaModule {
   def configure() = {
@@ -50,15 +50,22 @@ class Module extends AbstractModule with ScalaModule {
       .annotatedWith(Names.named("de"))
       .to(classOf[GermanHello])*/
 
-    bind[JsonDeserializer[LBDataSet]].annotatedWith(Names.named("lbDeserializer")).to[LBJsonDeserializer]
+//    bind[JsonDeserializer[LBDataSet]].annotatedWith(Names.named("lbDeserializer")).to[LBJsonDeserializer]
 
-    bind[DataSetClient[LBDataSet]].annotatedWith(Names.named("lbClient")).to[DataSetClient[LBDataSet]]
+  //  bind[DataSetClient[LBDataSet]].annotatedWith(Names.named("lbClient")).to[DataSetClient[LBDataSet]]
 //    bind[DataSetClient[ISPDataSet]].annotatedWith(Names.named("ispClient")).to[DataSetClient[ISPDataSet]]
    // bind[JsonDeserializer[ISPDataSet]].annotatedWith(Names.named("ispTransformer")).to[ISPJsonDeserializer]
 
-    bind[LBCitationDatasetResolver[LBDataSet]].annotatedWith(Names.named("lbDataSetResolver")).to[LBCitationDatasetResolver[LBDataSet]]
+    //bind[LBCitationDatasetResolver[LBDataSet]].annotatedWith(Names.named("lbDataSetResolver")).to[LBCitationDatasetResolver[LBDataSet]]
   //  bind[IspCitationDatasetResolver[ISPDataSet]].annotatedWith(Names.named("ispDataSetResolver")).to[IspCitationDatasetResolver[ISPDataSet]]
 
+
+    bind[JsonDeserializer[LBDataSet]].to[LBJsonDeserializer]
+    bind[JsonDeserializer[ISPDataSet]].to[ISPJsonDeserializer]
+    //bind[DataSetClient[LBDataSet]].to[DataSetClient[LBDataSet]]
+    //bind[DataSetClient[ISPDataSet]].to[DataSetClient[ISPDataSet]]
+    bind[LBCitationDatasetResolver[LBDataSet]].annotatedWith(Names.named("lbDataSetResolver")).to[LBCitationDatasetResolver[LBDataSet]]
+    bind[IspCitationDatasetResolver[ISPDataSet]].annotatedWith(Names.named("ispDataSetResolver")).to[IspCitationDatasetResolver[ISPDataSet]]
 
   }
 }
@@ -71,8 +78,8 @@ object MyServer {
 
    // val x = injector.instance[LBCitationDatasetResolver[LBDataSet]]
 
-    val serializer = injector.instance[LBCitationDatasetResolver[LBDataSet]](Names.named("lbDataSetResolver"))
- //   val serializer = injector.instance[IspCitationDatasetResolver[ISPDataSet]](Names.named("ispDataSetResolver"))
+    val serializer1 = injector.instance[LBCitationDatasetResolver[LBDataSet]](Names.named("lbDataSetResolver"))
+    val serializer2 = injector.instance[IspCitationDatasetResolver[ISPDataSet]](Names.named("ispDataSetResolver"))
 
 
     /*val service = injector.instance[Service]
